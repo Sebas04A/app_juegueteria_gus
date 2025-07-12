@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'src/views/home/home_screen.dart'; // Importaremos la pantalla de inicio más adelante
+import 'src/utils/app_colors.dart'; // Importamos nuestra nueva paleta de colores
+import 'src/views/home/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,27 +13,40 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Juguetería Fantasía',
-      debugShowCheckedModeBanner: false, // Oculta la cinta de "Debug"
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // Definimos un tema visual básico para la aplicación
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        // Usamos nuestra paleta de colores personalizada
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: AppColors.primary,
+          primary: AppColors.primary,
+          secondary: AppColors.secondary,
+          background: AppColors.background,
+          surface: AppColors.surface,
+        ),
         useMaterial3: true,
+        scaffoldBackgroundColor:
+            AppColors.background, // Color de fondo para las pantallas
         appBarTheme: const AppBarTheme(
-          backgroundColor: Colors.amber,
-          foregroundColor: Colors.black,
-          elevation: 4.0,
+          backgroundColor: AppColors.surface,
+          foregroundColor: AppColors.textPrimary,
+          elevation: 1.0,
+          surfaceTintColor: Colors
+              .transparent, // Evita que la barra cambie de color al hacer scroll
           titleTextStyle: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Colors.black,
+            color: AppColors.textPrimary,
           ),
         ),
-        floatingActionButtonTheme: const FloatingActionButtonThemeData(
-          backgroundColor: Colors.amber,
-          foregroundColor: Colors.black,
+        cardTheme: CardThemeData(
+          color: AppColors.surface,
+          elevation: 2,
+          shadowColor: Colors.black.withOpacity(0.1),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15.0),
+          ),
         ),
       ),
-      // La pantalla de inicio de nuestra aplicación
       home: const HomeScreen(),
     );
   }
