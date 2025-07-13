@@ -6,12 +6,13 @@ import 'dart:convert';
 import '../models/product_model.dart';
 import '../models/cart_item_model.dart';
 import '../models/compra_dto.dart';
+import '../models/user_model.dart'; // Importamos el nuevo modelo de usuario
 
 class ApiService {
-  final String _baseUrl = "https://pruebas.tryasp.net/api/integracion";
+  final String _baseUrl = "https://pruebas.tryasp.net/api";
 
   Future<List<Product>> getProducts() async {
-    final url = Uri.parse('$_baseUrl/productos');
+    final url = Uri.parse('$_baseUrl/integracion/productos');
 
     try {
       final response = await http.get(url);
@@ -29,8 +30,61 @@ class ApiService {
     }
   }
 
+  Future<String?> loginUser(String username, String password) async {
+    final url = Uri.parse('$_baseUrl/Usuarios/login');
+    print('Intentando login con usuario: $username y contraseña: $password');
+    print('URL de login: $url');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: json.encode({'id_usuario': username, 'contrasena': password}),
+      );
+
+      // La API devuelve 200 OK en un login exitoso.
+      if (response.statusCode == 200) {
+        // Podríamos decodificar una respuesta más compleja, pero por ahora,
+        // si el login es exitoso, devolvemos el nombre de usuario como ID.
+        return username;
+      } else {
+        // Si el código de estado no es 200 (ej. 401 Unauthorized), el login falló.
+        return null;
+      }
+    } catch (e) {
+      // Captura errores de red (sin conexión, etc.)
+      print('Error en la llamada de login: $e');
+      throw Exception('Error de red durante el inicio de sesión');
+    }
+  }
+
+  Future<bool> registerUser(User user) async {
+    final url = Uri.parse('$_baseUrl/Usuarios');
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json; charset=UTF-8'},
+        body: userToJson(user), // Usamos la función de nuestro modelo
+      );
+
+      // Un código 201 (Created) usualmente indica éxito en un POST.
+      // También podemos aceptar 200 (OK) si la API lo devuelve así.
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return true;
+      } else {
+        // Podemos intentar decodificar un mensaje de error del cuerpo de la respuesta.
+        print(
+          'Error de registro - Status: ${response.statusCode}, Body: ${response.body}',
+        );
+        return false;
+      }
+    } catch (e) {
+      print('Error en la llamada de registro: $e');
+      throw Exception('Error de red durante el registro');
+    }
+  }
+
   Future<List<CartItem>> ObtenerCarrito(String userId) async {
-    final url = Uri.parse('$_baseUrl/Carrito/Contenido/$userId');
+    final url = Uri.parse('$_baseUrl/integracion/Carrito/Contenido/$userId');
 
     try {
       final response = await http.get(url);
@@ -59,7 +113,7 @@ class ApiService {
     required int productId,
     required int quantity,
   }) async {
-    final url = Uri.parse('$_baseUrl/CompraInterna');
+    final url = Uri.parse('$_baseUrl/integracion/CompraInterna');
 
     final body = jsonEncode({
       "id_usuario": userId,
@@ -90,7 +144,7 @@ class ApiService {
     required String userId,
     required List<Map<String, dynamic>> products,
   }) async {
-    final url = Uri.parse('$_baseUrl/Carrito/Editar');
+    final url = Uri.parse('$_baseUrl/integracion/Carrito/Editar');
 
     final body = jsonEncode({"id_usuario": userId, "productos": products});
 
@@ -114,7 +168,7 @@ class ApiService {
   }
 
   Future<void> realizarCompra(Map<String, dynamic> compraDto) async {
-    final url = Uri.parse('$_baseUrl/compra');
+    final url = Uri.parse('$_baseUrl/integracion/compra');
 
     try {
       final response = await http.post(
@@ -136,7 +190,7 @@ class ApiService {
   }
 
   Future<void> realizarCompraDTO(CompraDTO compra) async {
-    final url = Uri.parse('$_baseUrl/compra');
+    final url = Uri.parse('$_baseUrl/integracion/compra');
 
     try {
       final response = await http.post(

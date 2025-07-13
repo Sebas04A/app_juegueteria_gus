@@ -5,10 +5,16 @@ import 'src/views/home/home_screen.dart';
 import 'src/views/cart_screen.dart';
 import 'src/providers/cart_provider.dart';
 
+import 'package:provider/provider.dart'; // Importamos provider
+import 'src/services/auth_provider.dart'; // Importamos nuestro provider
+
 void main() {
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => CartProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ],
       child: const MyApp(),
     ),
   );
@@ -20,7 +26,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Juguetería Fantasía',
+      title: 'Juguetería Gustavito',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(

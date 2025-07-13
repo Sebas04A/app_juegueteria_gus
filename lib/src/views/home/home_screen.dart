@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import '../../models/product_model.dart';
 import '../../services/api_service.dart';
 import 'widgets/product_grid.dart'; // Importamos nuestro nuevo widget de cuadrícula
+import '../login/login_screen.dart';
+
+import 'package:provider/provider.dart';
+import '../../services/auth_provider.dart';
+import '../../utils/app_colors.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -65,6 +70,38 @@ class _HomeScreenState extends State<HomeScreen> {
           },
         ),
       ),
+      floatingActionButton: Consumer<AuthProvider>(
+        builder: (context, auth, child) {
+          return FloatingActionButton.extended(
+            onPressed: () {
+              if (auth.isLoggedIn) {
+                // Si está logueado, cerramos sesión.
+                auth.logout();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Has cerrado sesión.'),
+                    backgroundColor: AppColors.textSecondary,
+                  ),
+                );
+              } else {
+                // Si no, lo mandamos a la pantalla de login.
+                Navigator.of(
+                  context,
+                ).push(MaterialPageRoute(builder: (_) => const LoginScreen()));
+              }
+            },
+            label: Text(auth.isLoggedIn ? 'Salir' : 'Ingresar'),
+            icon: Icon(auth.isLoggedIn ? Icons.logout : Icons.login),
+            backgroundColor: auth.isLoggedIn
+                ? Colors.red.shade400
+                : AppColors.secondary,
+            foregroundColor: auth.isLoggedIn
+                ? Colors.white
+                : AppColors.textPrimary,
+          );
+        },
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
     );
   }
 

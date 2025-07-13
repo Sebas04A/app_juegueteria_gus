@@ -1,9 +1,11 @@
 // Guardar en: lib/src/views/home/widgets/product_card.dart
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../models/product_model.dart';
-import '../../../utils/app_colors.dart'; // Importamos nuestros colores
-// import '../../product_detail/product_detail_screen.dart';
+import '../../../services/auth_provider.dart';
+import '../../../utils/app_colors.dart';
+import '../../login/login_screen.dart'; // Importamos la pantalla de login
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -12,18 +14,16 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Usamos el CardTheme definido en main.dart
     return Card(
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
           print('Navegar al detalle de: ${product.prodNombre}');
-          // Navigator.push(context, MaterialPageRoute(builder: (context) => ProductDetailScreen(product: product)));
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- SECCIÓN DE IMAGEN CON INDICADOR DE STOCK ---
+            // ... (código de la imagen sin cambios) ...
             Expanded(
               child: Stack(
                 children: [
@@ -66,7 +66,6 @@ class ProductCard extends StatelessWidget {
                       },
                     ),
                   ),
-                  // Etiqueta de stock en la esquina
                   if (product.prodStock < 10 && product.prodStock > 0)
                     Positioned(
                       top: 8,
@@ -93,13 +92,12 @@ class ProductCard extends StatelessWidget {
                 ],
               ),
             ),
-            // --- SECCIÓN DE DETALLES ---
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Categoría
+                  // ... (código de categoría y nombre sin cambios) ...
                   Text(
                     product.prodCategoria.toUpperCase(),
                     style: const TextStyle(
@@ -112,7 +110,6 @@ class ProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  // Nombre del producto
                   Text(
                     product.prodNombre,
                     style: const TextStyle(
@@ -124,12 +121,10 @@ class ProductCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 10),
-                  // --- PRECIO Y BOTÓN DE COMPRA ---
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Precio
                       Text(
                         '\$${product.prodPrecio.toStringAsFixed(2)}',
                         style: const TextStyle(
@@ -138,23 +133,50 @@ class ProductCard extends StatelessWidget {
                           color: AppColors.primary,
                         ),
                       ),
-                      // Botón de Añadir al Carrito
+                      // --- LÓGICA DE COMPRA ACTUALIZADA ---
                       Material(
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(12),
                         child: InkWell(
                           onTap: () {
-                            print('Añadir al carrito: ${product.prodNombre}');
-                            // Lógica para añadir al carrito
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  '${product.prodNombre} añadido al carrito.',
-                                ),
-                                backgroundColor: AppColors.textPrimary,
-                                duration: const Duration(seconds: 2),
-                              ),
+                            // Obtenemos el authProvider sin escuchar cambios.
+                            final authProvider = Provider.of<AuthProvider>(
+                              context,
+                              listen: false,
                             );
+
+                            if (authProvider.isLoggedIn) {
+                              // Si está logueado, añade al carrito.
+                              print('Añadir al carrito: ${product.prodNombre}');
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    '${product.prodNombre} añadido al carrito.',
+                                  ),
+                                  backgroundColor: AppColors.textPrimary,
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            } else {
+                              // Si no, muestra un mensaje y redirige a login.
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text(
+                                    'Debes iniciar sesión para comprar.',
+                                  ),
+                                  action: SnackBarAction(
+                                    label: 'INGRESAR',
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) => const LoginScreen(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                ),
+                              );
+                            }
                           },
                           borderRadius: BorderRadius.circular(12),
                           child: const Padding(
