@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
-import 'src/utils/app_colors.dart'; // Importamos nuestra nueva paleta de colores
+import 'package:provider/provider.dart';
+import 'src/utils/app_colors.dart';
 import 'src/views/home/home_screen.dart';
+import 'src/views/cart_screen.dart';
+import 'src/providers/cart_provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [ChangeNotifierProvider(create: (_) => CartProvider())],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -15,7 +23,6 @@ class MyApp extends StatelessWidget {
       title: 'Juguetería Fantasía',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // Usamos nuestra paleta de colores personalizada
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primary,
           primary: AppColors.primary,
@@ -24,14 +31,12 @@ class MyApp extends StatelessWidget {
           surface: AppColors.surface,
         ),
         useMaterial3: true,
-        scaffoldBackgroundColor:
-            AppColors.background, // Color de fondo para las pantallas
+        scaffoldBackgroundColor: AppColors.background,
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.surface,
           foregroundColor: AppColors.textPrimary,
           elevation: 1.0,
-          surfaceTintColor: Colors
-              .transparent, // Evita que la barra cambie de color al hacer scroll
+          surfaceTintColor: Colors.transparent,
           titleTextStyle: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -47,7 +52,11 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const HomeScreen(),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const HomeScreen(),
+        '/cart': (context) => CartScreen(),
+      },
     );
   }
 }

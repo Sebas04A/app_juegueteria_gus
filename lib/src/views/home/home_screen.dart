@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.shopping_cart_outlined),
             onPressed: () {
-              print('Carrito presionado!');
+              Navigator.of(context).pushNamed('/cart');
             },
           ),
         ],
