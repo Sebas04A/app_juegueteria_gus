@@ -37,7 +37,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[100], // Un color de fondo sutil para la app
       appBar: AppBar(
-        title: const Text('Juguetería Fantasía'),
+        title: const Text('Juguetería Gustavito'),
         actions: [
           IconButton(
             icon: const Icon(Icons.shopping_cart_outlined),
