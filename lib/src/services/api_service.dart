@@ -8,6 +8,8 @@ import '../models/cart_item_model.dart';
 import '../models/compra_dto.dart';
 import '../models/user_model.dart'; // Importamos el nuevo modelo de usuario
 
+Product singleProductFromJson(String str) => Product.fromJson(json.decode(str));
+
 class ApiService {
   final String _baseUrl = "https://pruebas.tryasp.net/api";
 
@@ -26,6 +28,23 @@ class ApiService {
       }
     } catch (e) {
       print('Error al obtener productos: $e');
+      throw Exception('Ocurrió un error al conectar con el servidor');
+    }
+  }
+
+  // --- NUEVO MÉTODO PARA OBTENER PRODUCTO POR ID ---
+  Future<Product> getProductById(int id) async {
+    final url = Uri.parse('$_baseUrl/integracion/productos/$id');
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        // Usamos nuestra nueva función de ayuda para decodificar el objeto único.
+        return singleProductFromJson(response.body);
+      } else {
+        // Si el producto no se encuentra (ej. 404) o hay otro error.
+        throw Exception('Falló la carga del producto con id: $id');
+      }
+    } catch (e) {
       throw Exception('Ocurrió un error al conectar con el servidor');
     }
   }

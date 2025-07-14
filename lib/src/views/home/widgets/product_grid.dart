@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../../../models/product_model.dart';
 import 'product_card.dart';
 
+// Ahora este widget devuelve un SliverGrid, que es la versión de GridView
+// para usar dentro de CustomScrollView.
 class ProductGrid extends StatelessWidget {
   final List<Product> products;
 
@@ -11,26 +13,21 @@ class ProductGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // GridView se encarga de mostrar los productos en una cuadrícula adaptable.
-    return GridView.builder(
-      // Añadimos un padding generoso para que no esté pegado a los bordes.
+    return SliverPadding(
       padding: const EdgeInsets.all(16.0),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        // Mostramos 2 columnas.
-        crossAxisCount: 2,
-        // Espaciado horizontal entre tarjetas.
-        crossAxisSpacing: 16.0,
-        // Espaciado vertical entre tarjetas.
-        mainAxisSpacing: 16.0,
-        // Relación de aspecto para que las tarjetas sean más altas que anchas.
-        childAspectRatio: 0.68,
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 16.0,
+          mainAxisSpacing: 16.0,
+          childAspectRatio: 0.68,
+        ),
+        // SliverChildBuilderDelegate es el equivalente a itemBuilder para slivers.
+        delegate: SliverChildBuilderDelegate((context, index) {
+          final product = products[index];
+          return ProductCard(product: product);
+        }, childCount: products.length),
       ),
-      itemCount: products.length,
-      itemBuilder: (context, index) {
-        final product = products[index];
-        // Usamos nuestro ProductCard rediseñado.
-        return ProductCard(product: product);
-      },
     );
   }
 }
