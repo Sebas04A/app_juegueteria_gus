@@ -33,11 +33,12 @@ class CartProvider with ChangeNotifier {
   Future<void> agregarProductoBackend({
     required String userId,
     required CartItem item,
+    int? cantidad, // Cantidad opcional
   }) async {
     await _apiService.addToCart(
       userId: userId,
       productId: item.productoId,
-      quantity: item.cantidad,
+      quantity: cantidad ?? item.cantidad,
     );
 
     // Recargar carrito después de agregar
