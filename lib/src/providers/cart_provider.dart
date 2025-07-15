@@ -29,4 +29,18 @@ class CartProvider with ChangeNotifier {
     _items = [];
     notifyListeners();
   }
+
+  Future<void> agregarProductoBackend({
+    required String userId,
+    required CartItem item,
+  }) async {
+    await _apiService.addToCart(
+      userId: userId,
+      productId: item.productoId,
+      quantity: item.cantidad,
+    );
+
+    // Recargar carrito después de agregar
+    await cargarCarrito(userId);
+  }
 }

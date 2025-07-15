@@ -6,7 +6,10 @@ import '../../../models/product_model.dart';
 import '../../../services/auth_provider.dart';
 import '../../../utils/app_colors.dart';
 import '../../login/login_screen.dart';
-import '../../product_detail/product_detail_screen.dart'; // Importamos la nueva pantalla
+import '../../product_detail/product_detail_screen.dart';
+import '../../../providers/cart_provider.dart';
+import '../../../models/cart_item_model.dart';
+import '../../../services/api_service.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -150,7 +153,6 @@ class ProductCard extends StatelessWidget {
                     // Precio y botón de compra
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      // alignItems: Alignment.center,
                       children: [
                         Text(
                           '\$${product.prodPrecio.toStringAsFixed(2)}',
@@ -173,7 +175,7 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  // Widget de ayuda para el botón de añadir al carrito, más pequeño y refinado.
+  // Widget del botón de añadir al carrito
   Widget _buildAddToCartButton(BuildContext context) {
     return SizedBox(
       width: 40,
@@ -182,20 +184,57 @@ class ProductCard extends StatelessWidget {
         color: AppColors.primary,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
-          onTap: () {
+          onTap: () async {
             final authProvider = Provider.of<AuthProvider>(
               context,
               listen: false,
             );
+
             if (authProvider.isLoggedIn) {
-              print('Añadir al carrito: ${product.prodNombre}');
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${product.prodNombre} añadido al carrito.'),
-                  backgroundColor: AppColors.textPrimary,
-                  duration: const Duration(seconds: 2),
-                ),
-              );
+              try {
+                // 1. Llamar API para agregar el producto al backend
+                await ApiService().addToCart(
+                  userId: authProvider.userId!,
+                  productId: product.idProducto,
+                  quantity: 1,
+                );
+
+                // 2. Actualizar carrito localmente
+                final cartProvider = Provider.of<CartProvider>(
+                  context,
+                  listen: false,
+                );
+                cartProvider.agregarLocal(
+                  CartItem(
+                    productoId: product.idProducto,
+                    nombre: product.prodNombre,
+                    precio: product.prodPrecio,
+                    cantidad: 1,
+                    stock: product.prodStock,
+                    prodImg: product.firstImage,
+                    edad: '',
+                    carritoId:
+                        0, // lo puedes setear dinámicamente si tu backend lo devuelve
+                  ),
+                );
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${product.prodNombre} añadido al carrito.'),
+                    backgroundColor: AppColors.textPrimary,
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Error al agregar ${product.prodNombre} al carrito.',
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(

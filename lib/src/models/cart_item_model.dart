@@ -1,4 +1,5 @@
 class CartItem {
+  final int carritoId;
   final int productoId;
   final String nombre;
   final double precio;
@@ -8,6 +9,7 @@ class CartItem {
   final String edad;
 
   CartItem({
+    required this.carritoId,
     required this.productoId,
     required this.nombre,
     required this.precio,
@@ -18,16 +20,18 @@ class CartItem {
   });
 
   factory CartItem.fromJson(Map<String, dynamic> json) => CartItem(
-    productoId: json["producto_id"],
-    nombre: json["nombre"],
-    precio: (json["precio"] as num).toDouble(),
-    cantidad: json["cantidad"],
-    stock: json["stock"],
+    productoId: json["producto_id"] ?? 0,
+    nombre: json["nombre"] ?? "",
+    precio: (json["precio"] ?? 0).toDouble(),
+    cantidad: json["cantidad"] ?? 0,
+    stock: json["stock"] ?? 0,
     prodImg: json["prodImg"] ?? "",
     edad: json["edad"] ?? "",
+    carritoId: json["carrito_id"] ?? 0,
   );
 
   CartItem copyWith({
+    int? carritoId,
     int? productoId,
     String? nombre,
     double? precio,
@@ -37,6 +41,7 @@ class CartItem {
     String? edad,
   }) {
     return CartItem(
+      carritoId: carritoId ?? this.carritoId,
       productoId: productoId ?? this.productoId,
       nombre: nombre ?? this.nombre,
       precio: precio ?? this.precio,
