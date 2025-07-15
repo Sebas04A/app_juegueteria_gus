@@ -18,13 +18,16 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final heroTag = 'product-image-${product.idProducto}';
     return InkWell(
       onTap: () {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                ProductDetailScreen(productId: product.idProducto),
+            builder: (context) => ProductDetailScreen(
+              productId: product.idProducto,
+              heroTag: heroTag,
+            ),
           ),
         );
       },

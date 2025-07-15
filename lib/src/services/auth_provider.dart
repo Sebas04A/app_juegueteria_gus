@@ -36,8 +36,7 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _errorMessage =
-          'No se pudo conectar con el servidor. Inténtalo de nuevo.';
+      _errorMessage = 'Contraseña incorrecta o error de conexión.';
       _isLoading = false;
       notifyListeners();
       return false;
