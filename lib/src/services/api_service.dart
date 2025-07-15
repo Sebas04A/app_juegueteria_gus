@@ -192,9 +192,10 @@ class ApiService {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       if (data is List) {
-        return List<CarritoDetalleItem>.from(
-          data.map((e) => CarritoDetalleItem.fromJson(e)),
-        );
+        return data
+            .whereType<Map<String, dynamic>>() // solo mapas
+            .map((e) => CarritoDetalleItem.fromJson(e))
+            .toList();
       } else {
         return [];
       }
@@ -212,19 +213,128 @@ class ApiService {
       throw Exception('Error al eliminar detalle del carrito');
     }
   }
+
+  Future<bool> verificarStockDisponible(int idProducto, int cantidad) async {
+    final url = Uri.parse('$_baseUrl/integracion/stock/$idProducto/$cantidad');
+
+    try {
+      final response = await http.get(url);
+
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        return decoded == true;
+      } else {
+        print('Error verificando stock - Status Code: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('Error verificando stock: $e');
+      return false;
+    }
+  }
+
+  Future<int> verificarStockMaximo(int idProducto) async {
+    final url = Uri.parse('$_baseUrl/integracion/productos/$idProducto');
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        return decoded['ProdStock'] ?? 0;
+      } else {
+        print('Error al obtener stock - Status: ${response.statusCode}');
+        return 0;
+      }
+    } catch (e) {
+      print('Error al obtener stock: $e');
+      return 0;
+    }
+  }
+
+  Future<void> actualizarDetalleCarrito(
+    int detalleId,
+    Map<String, dynamic> data,
+  ) async {
+    final url = Uri.parse('$_baseUrl/CarritoDetalle/$detalleId');
+
+    try {
+      final response = await http.put(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(data),
+      );
+
+      if (response.statusCode != 200) {
+        print(
+          'Error al actualizar detalle carrito - Status: ${response.statusCode}',
+        );
+        throw Exception('Error al actualizar detalle del carrito');
+      }
+    } catch (e) {
+      print('Error al actualizar detalle del carrito: $e');
+      throw Exception('Error de red al actualizar detalle del carrito');
+    }
+  }
+
+  Future<bool> confirmarCompra(Map<String, dynamic> confirmarDto) async {
+    final url = Uri.parse('$_baseUrl/integracion/confirmarCompra');
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(confirmarDto),
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        if (decoded == true) {
+          return true;
+        } else {
+          return false;
+        }
+      } else {
+        print('Error confirmando compra - Status Code: ${response.statusCode}');
+        return false;
+      }
+    } catch (e) {
+      print('Error confirmando compra: $e');
+      return false;
+    }
+  }
+
+  Future<List<dynamic>> obtenerFacturas() async {
+    final url = Uri.parse('https://pruebas.tryasp.net/facturas');
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body);
+    } else {
+      throw Exception('Error obteniendo facturas: ${response.body}');
+    }
+  }
 }
 
 /// ✅ Modelo auxiliar para detalles
 class CarritoDetalleItem {
   final int id;
   final int carritoId;
+  final int productoId;
+  final int cantidad;
 
-  CarritoDetalleItem({required this.id, required this.carritoId});
+  CarritoDetalleItem({
+    required this.id,
+    required this.carritoId,
+    required this.productoId,
+    required this.cantidad,
+  });
 
   factory CarritoDetalleItem.fromJson(Map<String, dynamic> json) {
     return CarritoDetalleItem(
-      id: json["CarritoDetalleID"] as int,
-      carritoId: json["CarritoID"] as int,
+      id: json['CarritoDetalleID'] ?? 0,
+      carritoId: json['CarritoID'] ?? 0,
+      productoId: json['ProductoID'] ?? 0,
+      cantidad: json['Cantidad'] ?? 0,
     );
   }
 }

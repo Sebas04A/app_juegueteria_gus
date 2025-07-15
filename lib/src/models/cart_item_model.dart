@@ -3,7 +3,7 @@ class CartItem {
   final int productoId;
   final String nombre;
   final double precio;
-  final int cantidad;
+  int cantidad;
   final int stock;
   final String prodImg;
   final String edad;
@@ -49,6 +49,29 @@ class CartItem {
       stock: stock ?? this.stock,
       prodImg: prodImg ?? this.prodImg,
       edad: edad ?? this.edad,
+    );
+  }
+}
+
+class CarritoDetalleItem {
+  final int id;
+  final int carritoId;
+  final int productoId;
+  final int cantidad;
+
+  CarritoDetalleItem({
+    required this.id,
+    required this.carritoId,
+    required this.productoId,
+    required this.cantidad,
+  });
+
+  factory CarritoDetalleItem.fromJson(Map<String, dynamic> json) {
+    return CarritoDetalleItem(
+      id: json['CarritoDetalleID'] ?? 0,
+      carritoId: json['CarritoID'] ?? 0,
+      productoId: json['ProductoID'] ?? 0,
+      cantidad: json['Cantidad'] ?? 0,
     );
   }
 }

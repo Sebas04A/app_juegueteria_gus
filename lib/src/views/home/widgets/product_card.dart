@@ -190,52 +190,7 @@ class ProductCard extends StatelessWidget {
               listen: false,
             );
 
-            if (authProvider.isLoggedIn) {
-              try {
-                // 1. Llamar API para agregar el producto al backend
-                await ApiService().addToCart(
-                  userId: authProvider.userId!,
-                  productId: product.idProducto,
-                  quantity: 1,
-                );
-
-                // 2. Actualizar carrito localmente
-                final cartProvider = Provider.of<CartProvider>(
-                  context,
-                  listen: false,
-                );
-                cartProvider.agregarLocal(
-                  CartItem(
-                    productoId: product.idProducto,
-                    nombre: product.prodNombre,
-                    precio: product.prodPrecio,
-                    cantidad: 1,
-                    stock: product.prodStock,
-                    prodImg: product.firstImage,
-                    edad: '',
-                    carritoId:
-                        0, // lo puedes setear dinámicamente si tu backend lo devuelve
-                  ),
-                );
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('${product.prodNombre} añadido al carrito.'),
-                    backgroundColor: AppColors.textPrimary,
-                    duration: const Duration(seconds: 2),
-                  ),
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Error al agregar ${product.prodNombre} al carrito.',
-                    ),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            } else {
+            if (!authProvider.isLoggedIn) {
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: const Text('Debes iniciar sesión para comprar.'),
@@ -247,6 +202,158 @@ class ProductCard extends StatelessWidget {
                       );
                     },
                   ),
+                ),
+              );
+              return;
+            }
+
+            if (product.prodStock <= 0) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${product.prodNombre} está agotado.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+              return;
+            }
+
+            // Mostrar diálogo para elegir cantidad
+            int cantidadSeleccionada = 1;
+            final result = await showDialog<int>(
+              context: context,
+              builder: (context) {
+                return AlertDialog(
+                  title: Text('Elegir cantidad'),
+                  content: StatefulBuilder(
+                    builder: (context, setState) {
+                      return Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Stock disponible: ${product.prodStock}',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              IconButton(
+                                icon: const Icon(Icons.remove),
+                                onPressed: cantidadSeleccionada > 1
+                                    ? () => setState(() {
+                                        cantidadSeleccionada--;
+                                      })
+                                    : null,
+                              ),
+                              Text(
+                                '$cantidadSeleccionada',
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.add),
+                                onPressed:
+                                    cantidadSeleccionada < product.prodStock
+                                    ? () => setState(() {
+                                        cantidadSeleccionada++;
+                                      })
+                                    : null,
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancelar'),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                      ),
+                      onPressed: () {
+                        Navigator.of(context).pop(cantidadSeleccionada);
+                      },
+                      child: const Text('Añadir'),
+                    ),
+                  ],
+                );
+              },
+            );
+
+            if (result == null) {
+              // Cancelado
+              return;
+            }
+
+            // Verificar stock en backend
+            try {
+              final api = ApiService();
+              bool tieneStock = await api.verificarStockDisponible(
+                product.idProducto,
+                result,
+              );
+
+              if (!tieneStock) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'No hay suficiente stock disponible de ${product.prodNombre}.',
+                    ),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+                return;
+              }
+
+              // Llamar API para agregar al backend
+              await api.addToCart(
+                userId: authProvider.userId!,
+                productId: product.idProducto,
+                quantity: result,
+              );
+
+              // Actualizar carrito localmente
+              final cartProvider = Provider.of<CartProvider>(
+                context,
+                listen: false,
+              );
+
+              cartProvider.agregarLocal(
+                CartItem(
+                  productoId: product.idProducto,
+                  nombre: product.prodNombre,
+                  precio: product.prodPrecio,
+                  cantidad: result,
+                  stock: product.prodStock,
+                  prodImg: product.firstImage,
+                  edad: '',
+                  carritoId: 0,
+                ),
+              );
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${product.prodNombre} añadido al carrito.'),
+                  backgroundColor: AppColors.textPrimary,
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    'Error al agregar ${product.prodNombre} al carrito.',
+                  ),
+                  backgroundColor: Colors.red,
                 ),
               );
             }

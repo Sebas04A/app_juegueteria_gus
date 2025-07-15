@@ -30,6 +30,23 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // ✅ Método para eliminar producto localmente
+  void eliminarProductoLocal(int productoId) {
+    _items.removeWhere((item) => item.productoId == productoId);
+    notifyListeners();
+  }
+
+  // ✅ Método para actualizar la cantidad localmente
+  void actualizarCantidadLocal(int productoId, int nuevaCantidad) {
+    for (var item in _items) {
+      if (item.productoId == productoId) {
+        item.cantidad = nuevaCantidad;
+        break;
+      }
+    }
+    notifyListeners();
+  }
+
   Future<void> agregarProductoBackend({
     required String userId,
     required CartItem item,
