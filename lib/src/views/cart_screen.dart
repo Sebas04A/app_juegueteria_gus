@@ -176,13 +176,25 @@ class _CartScreenState extends State<CartScreen> {
               onPressed: () async {
                 Navigator.of(context).pop();
 
+                // ✅ MOSTRAR LOADER
+                showDialog(
+                  barrierDismissible: false,
+                  context: scaffoldContext,
+                  builder: (context) =>
+                      Center(child: CircularProgressIndicator()),
+                );
+
                 await _realizarCompra(
-                  scaffoldContext, // ✅ aquí usamos el context válido
+                  scaffoldContext,
                   cartProvider,
                   authProvider,
                   direccionController.text,
                   metodoPagoSeleccionado,
                 );
+
+                // ✅ CERRAR LOADER
+                Navigator.of(scaffoldContext).pop();
+
                 direccionController.dispose();
               },
             ),
