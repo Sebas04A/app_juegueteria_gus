@@ -111,7 +111,12 @@ class _CartScreenState extends State<CartScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    child: Text('Comprar (\$${total.toStringAsFixed(2)})'),
+                    child: Text(
+                      'Comprar (\$${total.toStringAsFixed(2)})',
+                      style: TextStyle(
+                        color: Colors.white,
+                      ), // Cambia Colors.red por el color que desees
+                    ),
                   ),
                 ),
               ],

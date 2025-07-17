@@ -285,7 +285,13 @@ class ProductCard extends StatelessWidget {
                       onPressed: () {
                         Navigator.of(context).pop(cantidadSeleccionada);
                       },
-                      child: const Text('Añadir'),
+                      child: const Text(
+                        'Añadir',
+                        style: TextStyle(
+                          color: Colors
+                              .white, // Cambia a cualquier color que desees
+                        ),
+                      ),
                     ),
                   ],
                 );
