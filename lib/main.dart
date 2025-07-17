@@ -6,7 +6,8 @@ import 'src/views/cart_screen.dart';
 import 'src/providers/cart_provider.dart';
 
 import 'package:provider/provider.dart'; // Importamos provider
-import 'src/services/auth_provider.dart'; // Importamos nuestro provider
+import 'src/services/auth_provider.dart';
+import 'src/views/splash/splash_screen.dart'; // Importamos nuestro provider
 
 void main() {
   runApp(
@@ -58,11 +59,15 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: '/',
+      // initialRoute: '/',
+      home: const SplashScreen(),
       routes: {
-        '/': (context) => const HomeScreen(),
+        // '/': (context) => const HomeScreen(),
         '/cart': (context) => CartScreen(),
       },
+      // routes: {
+      //   '/cart': (ctx) => const CartScreen(),
+      // },
     );
   }
 }

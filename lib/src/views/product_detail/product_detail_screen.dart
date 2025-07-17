@@ -1,11 +1,12 @@
 // Guardar en: lib/src/views/product_detail/product_detail_screen.dart
 
 import 'package:flutter/material.dart';
+import 'package:juegueteria_gustavito/src/models/cart_item_model.dart';
 import 'package:juegueteria_gustavito/src/services/auth_provider.dart';
 import 'package:provider/provider.dart';
-import '../../providers/cart_provider.dart';
 import '../../models/product_model.dart';
 import '../../services/api_service.dart';
+import '../../providers/cart_provider.dart';
 import '../../utils/app_colors.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -26,6 +27,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   late Future<Product> _productFuture;
   final ApiService _apiService = ApiService();
   int _quantity = 1;
+  int _selectedImageIndex = 0; // Para controlar la imagen seleccionada
 
   @override
   void initState() {
@@ -80,7 +82,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   SliverAppBar _buildSliverAppBar(Product product) {
     return SliverAppBar(
-      expandedHeight: 350.0,
+      expandedHeight: 400.0, // Aumentamos la altura para la galería
       pinned: true,
       backgroundColor: AppColors.surface,
       elevation: 0,
@@ -94,20 +96,73 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           color: AppColors.surface,
-          padding: const EdgeInsets.all(
-            32.0,
-          ), // Añadimos padding para que la imagen no esté en los filos
-          child: Hero(
-            tag: widget.heroTag,
-            child: Image.network(
-              product.firstImage,
-              fit: BoxFit.contain,
-              errorBuilder: (context, error, stackTrace) => const Icon(
-                Icons.toys_outlined,
-                size: 100,
-                color: Colors.grey,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Visor de imagen principal
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(24.0),
+                  child: Hero(
+                    tag: widget.heroTag,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: Image.network(
+                        product.prodImg.isNotEmpty
+                            ? product.prodImg[_selectedImageIndex]
+                            : product.firstImage,
+                        key: ValueKey<int>(
+                          _selectedImageIndex,
+                        ), // Clave para la animación
+                        fit: BoxFit.contain,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(
+                              Icons.toys_outlined,
+                              size: 100,
+                              color: Colors.grey,
+                            ),
+                      ),
+                    ),
+                  ),
+                ),
               ),
-            ),
+              // Galería de miniaturas
+              if (product.prodImg.length > 1)
+                Container(
+                  height: 80,
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: product.prodImg.length,
+                    itemBuilder: (context, index) {
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedImageIndex = index;
+                          });
+                        },
+                        child: Container(
+                          width: 80,
+                          margin: const EdgeInsets.symmetric(horizontal: 8.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: _selectedImageIndex == index
+                                  ? AppColors.primary
+                                  : Colors.grey.shade300,
+                              width: 2,
+                            ),
+                            image: DecorationImage(
+                              image: NetworkImage(product.prodImg[index]),
+                              fit: BoxFit.contain,
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+            ],
           ),
         ),
       ),
@@ -211,7 +266,6 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Selector de cantidad
           Container(
             decoration: BoxDecoration(
               color: AppColors.background,
@@ -239,32 +293,93 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             ),
           ),
           const SizedBox(width: 16),
-          // Botón de Añadir al Carrito
           Expanded(
             child: ElevatedButton.icon(
               icon: const Icon(Icons.add_shopping_cart_rounded),
               label: const Text('Añadir al Carrito'),
-              onPressed: () {
-                final authProvider = Provider.of<AuthProvider>(
-                  context,
-                  listen: false,
-                );
-                if (!authProvider.isLoggedIn) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Debes iniciar sesión para añadir al carrito.',
+              onPressed: () async {
+                try {
+                  final api = ApiService();
+                  bool tieneStock = await api.verificarStockDisponible(
+                    product.idProducto,
+                    _quantity,
+                  );
+
+                  if (!tieneStock) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          'No hay suficiente stock disponible de ${product.prodNombre}.',
+                        ),
+                        backgroundColor: Colors.red,
                       ),
-                      backgroundColor: Colors.redAccent,
+                    );
+                    return;
+                  }
+                  // Obtener el ID del usuario autenticado
+                  final authProvider = Provider.of<AuthProvider>(
+                    context,
+                    listen: false,
+                  );
+                  if (authProvider.userId == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'Debes iniciar sesión para agregar al carrito.',
+                        ),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  // Llamar API para agregar al backend
+                  await api.addToCart(
+                    userId: authProvider.userId!,
+                    productId: product.idProducto,
+                    quantity: _quantity,
+                  );
+
+                  // Actualizar carrito localmente
+                  final cartProvider = Provider.of<CartProvider>(
+                    context,
+                    listen: false,
+                  );
+
+                  cartProvider.agregarLocal(
+                    CartItem(
+                      productoId: product.idProducto,
+                      nombre: product.prodNombre,
+                      precio: product.prodPrecio,
+                      cantidad: _quantity,
+                      stock: product.prodStock,
+                      prodImg: product.firstImage,
+                      edad: '',
+                      carritoId: 0,
                     ),
                   );
-                  return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        '${product.prodNombre} añadido al carrito.',
+                      ),
+                      backgroundColor: AppColors.textPrimary,
+                      duration: const Duration(seconds: 2),
+                    ),
+                  );
+                } catch (e) {
+                  print('Error al agregar al carrito: $e');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Error al agregar ${product.prodNombre} al carrito.',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
-                ApiService().addToCart(
-                  userId: authProvider.userId!,
-                  productId: product.idProducto,
-                  quantity: _quantity,
-                );
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
@@ -306,7 +421,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           children: [
             const Icon(Icons.error_outline, color: Colors.red, size: 60),
             const Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(16.0),
               child: Text(
                 'No se pudo cargar el producto.',
                 textAlign: TextAlign.center,
